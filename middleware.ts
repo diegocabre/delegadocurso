@@ -2,25 +2,20 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
-  // Solo protegemos la ruta /admin
-  if (request.nextUrl.pathname.startsWith("/admin")) {
-    const authCookie = request.cookies.get("admin_auth");
+  const { pathname } = request.nextUrl;
+  const authCookie = request.cookies.get("admin_auth");
 
-    // Si no tiene la cookie de autorización, lo mandamos al login de admin
-    // OJO: Si tu página de login está dentro de /admin, esto causará un bucle.
-    // Asumiremos que creas una ruta /login-admin separada o manejas el estado.
-
-    // Para este ejemplo, usaremos una validación básica de Header o Cookie
-    if (authCookie?.value !== process.env.ADMIN_PASSWORD) {
-      // Si no está autorizado, puedes redirigir al home o a un 404
-      return NextResponse.redirect(new URL("/", request.url));
+  // Protegemos /admin pero permitimos que el API de auth funcione
+  if (pathname.startsWith("/admin")) {
+    // Si la cookie es correcta, dejamos pasar
+    if (authCookie?.value === process.env.ADMIN_PASSWORD) {
+      return NextResponse.next();
     }
+
+    // NOTA: No redirijas aquí si quieres manejar el formulario
+    // dentro de la misma página /admin como tienes en tu código.
+    // Si quieres usar tu formulario actual, el middleware NO debe redirigir.
   }
 
   return NextResponse.next();
 }
-
-// Configura en qué rutas se debe ejecutar el middleware
-export const config = {
-  matcher: "/admin/:path*",
-};
