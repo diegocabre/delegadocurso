@@ -1,10 +1,9 @@
 "use client";
 
 import { supabase } from "@/lib/supabase";
-import { ArrowLeft, Lock } from "lucide-react";
+import { ArrowLeft, Lock, ReceiptText, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-// Asegúrate de que las rutas de estos componentes sean correctas
 import GastoForm from "./componets/GastoForm";
 import PagoForm from "./componets/PagoForm";
 
@@ -56,7 +55,19 @@ export default function AdminPage() {
     }
   };
 
-  // ESTADO: NO AUTENTICADO (Muestra el candado)
+  const eliminarRegistro = async (tabla: string, id: string) => {
+    if (
+      !confirm(
+        "¿Estás seguro de eliminar este registro? Esta acción no se puede deshacer.",
+      )
+    )
+      return;
+
+    const { error } = await supabase.from(tabla).delete().eq("id", id);
+    if (error) alert("Error al eliminar: " + error.message);
+    else cargarDatos(); // Refresca las tablas
+  };
+
   if (!isAuth) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-900 p-4">
@@ -77,7 +88,7 @@ export default function AdminPage() {
           />
           <button
             onClick={handleLogin}
-            className="w-full bg-red-600 text-white p-4 rounded-xl font-bold"
+            className="w-full bg-red-600 text-white p-4 rounded-xl font-bold transition-all hover:bg-red-700"
           >
             Verificar Identidad
           </button>
@@ -86,23 +97,115 @@ export default function AdminPage() {
     );
   }
 
-  // ESTADO: AUTENTICADO (Esto es lo que te faltaba en el return)
   return (
     <div className="p-6 max-w-6xl mx-auto bg-slate-50 min-h-screen text-black">
-      <button
-        onClick={() => router.push("/")}
-        className="flex items-center text-slate-500 mb-6 hover:text-black transition-colors"
-      >
-        <ArrowLeft size={18} className="mr-1" /> Volver al Dashboard
-      </button>
+      <header className="flex justify-between items-center mb-8">
+        <button
+          onClick={() => router.push("/")}
+          className="flex items-center text-slate-500 hover:text-black transition-colors"
+        >
+          <ArrowLeft size={18} className="mr-1" /> Volver al Dashboard
+        </button>
+        <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
+          Sesión Activa
+        </span>
+      </header>
 
-      {/* AQUÍ VUELVEN TUS FORMULARIOS */}
-      <div className="grid md:grid-cols-2 gap-6 mb-10">
+      {/* FORMULARIOS DE REGISTRO */}
+      <div className="grid md:grid-cols-2 gap-6 mb-12">
         <PagoForm onPagoGuardado={cargarDatos} />
         <GastoForm onGastoGuardado={cargarDatos} />
       </div>
 
-      <div className="mt-10 pt-10 border-t flex justify-center">
+      {/* SECCIÓN DE HISTORIALES */}
+      <div className="grid lg:grid-cols-2 gap-8">
+        {/* Tabla Historial de Pagos */}
+        <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+          <div className="p-4 bg-green-50 border-b flex items-center gap-2 font-bold text-green-700">
+            <Users size={18} /> Historial de Abonos
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider">
+                <tr>
+                  <th className="p-4 font-bold">Alumno</th>
+                  <th className="p-4 font-bold">Monto</th>
+                  <th className="p-4 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {pagos.map((p) => (
+                  <tr
+                    key={p.id}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
+                    <td className="p-4 font-medium">
+                      {p.alumnos?.apellido} {p.alumnos?.nombre}
+                    </td>
+                    <td className="p-4 text-green-600 font-bold">
+                      ${p.monto.toLocaleString("es-CL")}
+                    </td>
+                    <td className="p-4 text-center">
+                      <button
+                        onClick={() => eliminarRegistro("pagos", p.id)}
+                        className="text-red-400 hover:text-red-600 p-2"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Tabla Historial de Gastos */}
+        <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+          <div className="p-4 bg-red-50 border-b flex items-center gap-2 font-bold text-red-700">
+            <ReceiptText size={18} /> Historial de Gastos
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider">
+                <tr>
+                  <th className="p-4 font-bold">Descripción</th>
+                  <th className="p-4 font-bold">Monto</th>
+                  <th className="p-4 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {gastos.map((g) => (
+                  <tr
+                    key={g.id}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
+                    <td className="p-4">
+                      <p className="font-medium">{g.descripcion}</p>
+                      <p className="text-[10px] text-slate-400">
+                        {new Date(g.fecha).toLocaleDateString("es-CL")}
+                      </p>
+                    </td>
+                    <td className="p-4 text-red-600 font-bold">
+                      ${g.monto.toLocaleString("es-CL")}
+                    </td>
+                    <td className="p-4 text-center">
+                      <button
+                        onClick={() => eliminarRegistro("gastos", g.id)}
+                        className="text-red-400 hover:text-red-600 p-2"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-20 py-10 border-t flex flex-col items-center gap-4">
         <button
           onClick={() => {
             document.cookie =
