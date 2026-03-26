@@ -13,24 +13,23 @@ export default function GastoForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget; // Referencia al formulario
+    const formData = new FormData(form);
+
     const monto = parseInt(formData.get("monto") as string);
     const descripcion = formData.get("descripcion") as string;
     const fechaStr = formData.get("fecha") as string;
     const file = formData.get("boleta") as File;
 
-    // --- VALIDACIONES ---
     if (descripcion.trim().length < 3)
-      return alert("⚠️ Ingresa una descripción válida.");
-    if (isNaN(monto) || monto <= 0)
-      return alert("⚠️ El monto debe ser mayor a 0.");
-    if (new Date(fechaStr) > new Date())
-      return alert("⚠️ La fecha no puede ser futura.");
+      return alert("⚠️ Descripción válida requerida");
+    if (isNaN(monto) || monto <= 0) return alert("⚠️ Monto inválido");
 
     setLoading(true);
-    let boletaUrl = null;
 
     try {
+      let boletaUrl = null;
+
       if (file && file.size > 0) {
         const fileExt = file.name.split(".").pop();
         const fileName = `gasto_${Date.now()}.${fileExt}`;
@@ -39,16 +38,18 @@ export default function GastoForm({
           .upload(`gastos/${fileName}`, file);
 
         if (uploadError) throw uploadError;
+
         const {
           data: { publicUrl },
         } = supabase.storage.from("boletas").getPublicUrl(`gastos/${fileName}`);
+
         boletaUrl = publicUrl;
       }
 
       const { error } = await supabase.from("gastos").insert([
         {
-          monto: monto,
-          descripcion: descripcion,
+          monto,
+          descripcion,
           categoria: formData.get("categoria"),
           fecha: fechaStr,
           boleta_url: boletaUrl,
@@ -57,9 +58,12 @@ export default function GastoForm({
 
       if (error) throw error;
 
-      alert("✅ Gasto registrado con éxito");
-      (e.target as HTMLFormElement).reset();
-      onGastoGuardado();
+      // --- EL SECRETO PARA QUE NO HAYA FLASH ---
+      form.reset(); // Limpia el formulario
+      onGastoGuardado(); // Actualiza la lista en AdminPage (vía estado, no reload)
+
+      // Opcional: Podrías usar un toast en lugar de alert para evitar bloquear el navegador
+      console.log("Gasto guardado con éxito");
     } catch (error: any) {
       alert("Error: " + error.message);
     } finally {
@@ -72,13 +76,12 @@ export default function GastoForm({
       onSubmit={handleSubmit}
       className="space-y-4 p-5 border rounded-2xl bg-white shadow-sm border-slate-100"
     >
+      {/* ... (Todo el resto de tu JSX igual) ... */}
       <div className="flex items-center gap-2 mb-3 text-red-600 font-bold border-b pb-3 border-slate-100">
         <Receipt size={22} />
         <div>
-          <h3 className="text-lg">Registrar Egreso</h3>
-          <p className="text-xs text-slate-500 font-normal font-sans">
-            Salida de fondos del curso
-          </p>
+          <h3 className="text-lg font-black">Registrar Egreso</h3>
+          <p className="text-xs text-slate-500 font-normal">Salida de fondos</p>
         </div>
       </div>
 
@@ -88,8 +91,8 @@ export default function GastoForm({
         </label>
         <input
           name="descripcion"
-          placeholder="Ej: Compra de carbón convivencia..."
-          className="w-full p-3 border rounded-lg text-black focus:ring-2 focus:ring-red-500 outline-none transition-all text-sm"
+          placeholder="Ej: Compra de carbón..."
+          className="w-full p-3 border rounded-lg text-black focus:ring-2 focus:ring-red-500 outline-none text-sm"
           required
         />
       </div>
@@ -102,7 +105,6 @@ export default function GastoForm({
           <input
             name="monto"
             type="number"
-            placeholder="Monto total"
             className="w-full p-3 border rounded-lg text-black font-bold focus:ring-2 focus:ring-red-500 outline-none"
             required
           />
@@ -127,7 +129,7 @@ export default function GastoForm({
         </label>
         <select
           name="categoria"
-          className="w-full p-3 border rounded-lg text-black bg-white focus:ring-2 focus:ring-red-500 outline-none transition-all font-medium text-sm"
+          className="w-full p-3 border rounded-lg text-black bg-white focus:ring-2 focus:ring-red-500 outline-none text-sm"
         >
           <option value="Eventos">Eventos / Convivencias</option>
           <option value="Regalos">Regalos / Premios</option>
@@ -152,7 +154,7 @@ export default function GastoForm({
 
       <button
         disabled={loading}
-        className="w-full bg-red-600 text-white p-4 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-red-700 transition-all disabled:bg-slate-300"
+        className="w-full bg-red-600 text-white p-4 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-red-700 transition-all disabled:bg-slate-300 shadow-lg shadow-red-100"
       >
         {loading ? (
           <Loader2 className="animate-spin" size={20} />
