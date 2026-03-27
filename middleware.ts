@@ -4,18 +4,25 @@ import { NextResponse } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const authCookie = request.cookies.get("admin_auth");
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
-  // Protegemos /admin pero permitimos que el API de auth funcione
+  // 1. Verificamos si estamos en la ruta de administración
   if (pathname.startsWith("/admin")) {
-    // Si la cookie es correcta, dejamos pasar
-    if (authCookie?.value === process.env.ADMIN_PASSWORD) {
+    // 2. Si NO hay cookie o la contraseña no coincide:
+    // Solo dejamos pasar si la ruta es el "login" (si tuvieras una separada)
+    // Pero como lo manejas en el mismo componente /admin, solo validamos la cookie.
+    if (!authCookie || authCookie.value !== ADMIN_PASSWORD) {
+      // Opcional: Podrías redirigir a una página de error o simplemente dejar que
+      // el componente de React maneje el estado "no autenticado" como lo haces ahora.
       return NextResponse.next();
     }
-
-    // NOTA: No redirijas aquí si quieres manejar el formulario
-    // dentro de la misma página /admin como tienes en tu código.
-    // Si quieres usar tu formulario actual, el middleware NO debe redirigir.
   }
 
   return NextResponse.next();
 }
+
+// 3. Mejoramos el 'matcher' para que el middleware no corra en archivos estáticos
+// Esto optimiza el rendimiento y evita avisos innecesarios.
+export const config = {
+  matcher: ["/admin/:path*"],
+};
