@@ -251,13 +251,12 @@ export default function DashboardPage() {
                   {/* Imagen de fondo si existe */}
                   {c.imagen_url && (
                     <div className="absolute inset-0 z-0">
-                      <Image
+                      <img
                         src={c.imagen_url}
                         alt={c.nombre}
-                        fill
-                        className="object-cover opacity-30 group-hover:opacity-40 transition-opacity"
+                        className="w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity"
                       />
-                      <div className="absolute inset-0 bg-linear-to-t from-white via-white/80 to-transparent"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-transparent"></div>
                     </div>
                   )}
 
