@@ -1,9 +1,11 @@
 import { supabase } from "@/lib/supabase";
-import { ArrowLeft, LogOut, ReceiptText, Users } from "lucide-react";
+import { ArrowLeft, HandCoins, LogOut, ReceiptText, Users } from "lucide-react";
 import Link from "next/link";
 import { logout } from "../actions/auth";
+import CampanaForm from "./componets/CampanaForm";
 import DeleteButton from "./componets/DeleteButton";
 import GastoForm from "./componets/GastoForm";
+import PagoCampanaForm from "./componets/PagoCampanaForm";
 import PagoForm from "./componets/PagoForm";
 
 export const dynamic = "force-dynamic";
@@ -19,8 +21,24 @@ export default async function AdminPage() {
     .select(`id, monto, fecha, alumnos (nombre, apellido)`)
     .order("fecha", { ascending: false });
 
+  // Nuevas consultas para el Módulo de Campañas
+  const { data: alumnos } = await supabase
+    .from("alumnos")
+    .select("*")
+    .order("apellido");
+
+  const { data: campanas } = await supabase
+    .from("campanas")
+    .select("*")
+    .order("fecha_creacion", { ascending: false });
+
+  const { data: pagosCampanas } = await supabase
+    .from("pagos_campanas")
+    .select(`id, monto, fecha, alumnos(nombre, apellido), campanas(nombre)`)
+    .order("fecha", { ascending: false });
+
   return (
-    <div className="p-6 max-w-6xl mx-auto bg-slate-50 min-h-screen text-black">
+    <div className="p-6 max-w-7xl mx-auto bg-slate-50 min-h-screen text-black">
       <header className="flex justify-between items-center mb-8">
         <Link
           href="/"
@@ -33,22 +51,52 @@ export default async function AdminPage() {
         </span>
       </header>
 
-      {/* FORMULARIOS DE REGISTRO */}
-      <div className="grid md:grid-cols-2 gap-6 mb-12">
+      {/* BLOQUE 1: CORE (CUOTA ANUAL Y GASTOS) */}
+      <h2 className="text-xl font-black text-slate-800 mb-4 border-b pb-2">
+        Gestión Tesorería Central (Cuota Anual)
+      </h2>
+      <div className="grid lg:grid-cols-2 gap-6 mb-12">
         <PagoForm />
         <GastoForm />
       </div>
 
-      {/* SECCIÓN DE HISTORIALES */}
-      <div className="grid lg:grid-cols-2 gap-8">
-        {/* Tabla Historial de Pagos */}
-        <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-          <div className="p-4 bg-green-50 border-b flex items-center gap-2 font-bold text-green-700">
-            <Users size={18} /> Historial de Abonos
+      {/* BLOQUE 2: MÓDULO DE CAMPAÑAS/EXTRAORDINARIOS */}
+      <h2 className="text-xl font-black text-purple-800 mb-4 border-b border-purple-200 pb-2">Eventos y Campañas Extraordinarias</h2>
+      
+      {/* LISTA DE CAMPAÑAS ACTIVAS (MOVIDA ARRIBA PARA VISIBILIDAD) */}
+      {campanas && campanas.length > 0 && (
+        <div className="mb-6 bg-white p-5 border border-purple-100 rounded-2xl shadow-sm">
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Campañas Activas (Puedes eliminarlas aquí)</h3>
+          <div className="flex flex-wrap gap-3">
+            {campanas.map(c => (
+              <div key={c.id} className="inline-flex items-center gap-3 bg-purple-50 border border-purple-100 rounded-full pl-4 pr-1 py-1 shadow-sm">
+                <span className="text-sm font-bold text-purple-800">{c.nombre} <span className="text-purple-500 font-normal">(${c.monto_objetivo.toLocaleString("es-CL")})</span></span>
+                <div className="h-4 w-px bg-purple-200 mx-1"></div>
+                <DeleteButton tabla="campanas" id={c.id} />
+              </div>
+            ))}
           </div>
-          <div className="overflow-x-auto">
+        </div>
+      )}
+
+      <div className="grid lg:grid-cols-2 gap-6 mb-12 items-start">
+        <CampanaForm />
+        <PagoCampanaForm alumnos={alumnos || []} campanas={campanas || []} />
+      </div>
+
+      {/* SECCIÓN DE HISTORIALES */}
+      <h2 className="text-xl font-black text-slate-800 mb-4 border-b pb-2">
+        Registros y Auditoría
+      </h2>
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Tabla Historial de Pagos (Cuota Anual) */}
+        <div className="bg-white rounded-2xl border shadow-sm overflow-hidden flex flex-col h-[500px]">
+          <div className="p-4 bg-green-50 border-b flex items-center gap-2 font-bold text-green-700 w-full shrink-0">
+            <Users size={18} /> Abonos (Cuota Anual)
+          </div>
+          <div className="overflow-y-auto flex-1">
             <table className="w-full text-sm text-left">
-              <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider">
+              <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider sticky top-0">
                 <tr>
                   <th className="p-4 font-bold">Alumno</th>
                   <th className="p-4 font-bold">Monto</th>
@@ -62,7 +110,8 @@ export default async function AdminPage() {
                     className="hover:bg-slate-50 transition-colors"
                   >
                     <td className="p-4 font-medium">
-                      {(p.alumnos as any)?.apellido} {(p.alumnos as any)?.nombre}
+                      {(p.alumnos as any)?.apellido}{" "}
+                      {(p.alumnos as any)?.nombre}
                     </td>
                     <td className="p-4 text-green-600 font-bold">
                       ${p.monto.toLocaleString("es-CL")}
@@ -77,14 +126,56 @@ export default async function AdminPage() {
           </div>
         </div>
 
-        {/* Tabla Historial de Gastos */}
-        <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-          <div className="p-4 bg-red-50 border-b flex items-center gap-2 font-bold text-red-700">
-            <ReceiptText size={18} /> Historial de Gastos
+        {/* Tabla Historial Pagos Extraordinarios */}
+        <div className="bg-white rounded-2xl border shadow-sm overflow-hidden flex flex-col h-[500px]">
+          <div className="p-4 bg-purple-50 border-b flex items-center gap-2 font-bold text-purple-700 w-full shrink-0">
+            <HandCoins size={18} /> Abonos (Eventos Extra)
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-y-auto flex-1">
             <table className="w-full text-sm text-left">
-              <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider">
+              <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider sticky top-0">
+                <tr>
+                  <th className="p-4 font-bold">Alumno / Evento</th>
+                  <th className="p-4 font-bold">Monto</th>
+                  <th className="p-4 text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {pagosCampanas?.map((pc) => (
+                  <tr
+                    key={pc.id}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
+                    <td className="p-4">
+                      <p className="font-medium text-slate-800">
+                        {(pc.alumnos as any)?.apellido}{" "}
+                        {(pc.alumnos as any)?.nombre}
+                      </p>
+                      <p className="text-[10px] font-bold text-purple-600 uppercase">
+                        {(pc.campanas as any)?.nombre}
+                      </p>
+                    </td>
+                    <td className="p-4 text-purple-600 font-bold">
+                      ${pc.monto.toLocaleString("es-CL")}
+                    </td>
+                    <td className="p-4 text-center">
+                      <DeleteButton tabla="pagos_campanas" id={pc.id} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Tabla Historial de Gastos */}
+        <div className="bg-white rounded-2xl border shadow-sm overflow-hidden flex flex-col h-[500px]">
+          <div className="p-4 bg-red-50 border-b flex items-center gap-2 font-bold text-red-700 w-full shrink-0">
+            <ReceiptText size={18} /> Últimos Egresos
+          </div>
+          <div className="overflow-y-auto flex-1">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider sticky top-0">
                 <tr>
                   <th className="p-4 font-bold">Descripción</th>
                   <th className="p-4 font-bold">Monto</th>

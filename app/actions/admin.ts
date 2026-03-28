@@ -94,11 +94,15 @@ export async function crearPago(formData: FormData) {
   revalidatePath("/admin");
 }
 
-export async function eliminarRegistro(tabla: "gastos" | "pagos", id: string) {
+export async function eliminarRegistro(
+  tabla: "gastos" | "pagos" | "campanas" | "pagos_campanas", 
+  id: string
+) {
   await checkAuth();
 
   const { error } = await supabaseAdmin.from(tabla).delete().eq("id", id);
   if (error) throw new Error(error.message);
   
+  revalidatePath("/");
   revalidatePath("/admin");
 }

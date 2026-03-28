@@ -3,6 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import {
   Image as ImageIcon,
+  PartyPopper,
   ReceiptText,
   Search,
   ShieldCheck,
@@ -35,8 +36,10 @@ function TableSkeleton({ rows = 4 }: { rows?: number }) {
 export default function DashboardPage() {
   const [gastos, setGastos] = useState<any[]>([]);
   const [pagos, setPagos] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true); // <--- NUEVO: Estado de carga inicial
-  const [filtroAlumno, setFiltroAlumno] = useState(""); // <--- NUEVO: Estado del buscador
+  const [campanas, setCampanas] = useState<any[]>([]); // <--- NUEVO: Campañas
+  const [pagosCampanas, setPagosCampanas] = useState<any[]>([]); // <--- NUEVO: Pagos Extra
+  const [loading, setLoading] = useState(true);
+  const [filtroAlumno, setFiltroAlumno] = useState("");
   const [selectedImg, setSelectedImg] = useState<string | null>(null);
 
   const getData = useCallback(async () => {
@@ -56,8 +59,20 @@ export default function DashboardPage() {
       )
       .order("fecha", { ascending: false });
 
+    const { data: c } = await supabase
+      .from("campanas")
+      .select("*")
+      .order("fecha_creacion", { ascending: false });
+
+    const { data: pc } = await supabase
+      .from("pagos_campanas")
+      .select(`id, monto, campana_id, alumnos (nombre, apellido)`)
+      .order("fecha", { ascending: false });
+
     if (g) setGastos(g);
     if (p) setPagos(p);
+    if (c) setCampanas(c);
+    if (pc) setPagosCampanas(pc);
     setLoading(false); // <--- NUEVO: Finalizamos carga
   }, []);
 
@@ -74,6 +89,16 @@ export default function DashboardPage() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "pagos" },
+        () => getData(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "campanas" },
+        () => getData(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pagos_campanas" },
         () => getData(),
       )
       .subscribe();
@@ -200,6 +225,56 @@ export default function DashboardPage() {
           </a>
         </div>
       </section>
+
+      {/* --- SECCIÓN NUEVA: CAMPAÑAS ESPECIALES --- */}
+      {campanas.length > 0 && (
+        <section className="mb-10">
+          <div className="flex items-center gap-2 mb-4">
+            <PartyPopper className="text-purple-500" size={24} />
+            <h2 className="text-xl font-black text-slate-800 tracking-tight">
+              Campañas y Eventos Especiales
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {campanas.map((c) => {
+              // Calcular recaudado para esta campaña específica
+              const recaudado = pagosCampanas
+                .filter((pc) => pc.campana_id === c.id)
+                .reduce((acc, pc) => acc + pc.monto, 0);
+
+              return (
+                <div
+                  key={c.id}
+                  className="bg-white p-5 rounded-2xl border border-purple-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
+                >
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-[100px] z-0 pointer-events-none"></div>
+                  <h3 className="font-bold text-lg text-slate-900 mb-1 relative z-10">
+                    {c.nombre}
+                  </h3>
+                  <p className="text-sm text-slate-500 mb-4 relative z-10">
+                    Meta/Costo:{" "}
+                    <span className="font-semibold text-slate-700">
+                      ${c.monto_objetivo.toLocaleString("es-CL")}
+                    </span>
+                  </p>
+
+                  <div className="space-y-2 relative z-10">
+                    <div className="flex justify-between items-center text-xs font-bold">
+                      <span className="text-purple-700 bg-white/50 px-1 rounded">
+                        Recaudado hasta ahora
+                      </span>
+                      <span className="text-slate-900 text-sm bg-white/80 px-2 py-0.5 rounded-md shadow-sm">
+                        ${recaudado.toLocaleString("es-CL")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* --- BARRA DE BÚSQUEDA UI --- */}
       <div className="mb-6 max-w-md relative shadow-green-50 shadow-lg">

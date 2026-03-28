@@ -2,13 +2,14 @@
 
 import { Trash2 } from "lucide-react";
 import { useTransition } from "react";
-import { eliminarRegistro } from "../../actions/admin";
+import { eliminarRegistro } from "@/app/actions/admin";
+import { toast } from "sonner";
 
 export default function DeleteButton({
   tabla,
   id,
 }: {
-  tabla: "gastos" | "pagos";
+  tabla: "gastos" | "pagos" | "campanas" | "pagos_campanas";
   id: string;
 }) {
   const [isPending, startTransition] = useTransition();
