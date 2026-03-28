@@ -20,11 +20,29 @@ export async function crearCampana(formData: FormData) {
 
   const nombre = formData.get("nombre") as string;
   const montoObjetivo = parseInt(formData.get("monto_objetivo") as string);
+  const file = formData.get("imagen") as File;
+
+  let imagenUrl = null;
+
+  if (file && file.size > 0) {
+    const fileExt = file.name.split(".").pop();
+    const fileName = `portada_${Date.now()}.${fileExt}`;
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("boletas")
+      .upload(`campanas/${fileName}`, file);
+
+    if (uploadError) throw new Error("Error subiendo foto portada: " + uploadError.message);
+    const {
+      data: { publicUrl },
+    } = supabaseAdmin.storage.from("boletas").getPublicUrl(`campanas/${fileName}`);
+    imagenUrl = publicUrl;
+  }
 
   const { error } = await supabaseAdmin.from("campanas").insert([
     {
       nombre,
       monto_objetivo: montoObjetivo,
+      imagen_url: imagenUrl,
     },
   ]);
 

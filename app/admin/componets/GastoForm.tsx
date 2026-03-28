@@ -112,7 +112,6 @@ export default function GastoForm() {
           name="boleta"
           type="file"
           accept="image/*"
-          capture="environment"
           className="w-full text-xs text-slate-500 file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-red-100 file:text-red-700 cursor-pointer"
         />
       </div>

@@ -151,7 +151,6 @@ export default function PagoForm() {
           name="comprobante"
           type="file"
           accept="image/*"
-          capture="environment"
           className="w-full text-xs text-slate-500 file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-green-100 file:text-green-700 cursor-pointer"
         />
       </div>

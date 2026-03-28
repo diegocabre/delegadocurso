@@ -1,9 +1,9 @@
 "use client";
 
+import { crearCampana } from "@/app/actions/campanas";
 import { HandCoins, PlusCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { crearCampana } from "@/app/actions/campanas";
 
 export default function CampanaForm() {
   const [loading, setLoading] = useState(false);
@@ -15,7 +15,7 @@ export default function CampanaForm() {
     try {
       const formData = new FormData(e.currentTarget);
       await crearCampana(formData);
-      
+
       toast.success("Campaña creada con éxito");
       (e.target as HTMLFormElement).reset();
     } catch (error: any) {
@@ -31,10 +31,12 @@ export default function CampanaForm() {
         <HandCoins className="text-purple-500" />
         Lanzar Nueva Campaña (Ej: Pascua)
       </div>
-      
+
       <form onSubmit={handleSubmit} className="p-5 space-y-4">
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-1">Nombre del Evento</label>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">
+            Nombre del Evento
+          </label>
           <input
             type="text"
             name="nombre"
@@ -43,15 +45,29 @@ export default function CampanaForm() {
             className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm bg-slate-50 transition-all font-medium active:scale-[0.99]"
           />
         </div>
-        
+
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-1">Costo por Alumno ($)</label>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">
+            Costo por Alumno ($)
+          </label>
           <input
             type="number"
             name="monto_objetivo"
             placeholder="Ej: 3500"
             required
             className="w-full p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-sm bg-slate-50 transition-all font-medium active:scale-[0.99]"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-1">
+            Foto de Portada (Opcional)
+          </label>
+          <input
+            type="file"
+            name="imagen"
+            accept="image/*"
+            className="w-full p-2 border border-slate-200 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 bg-slate-50 outline-none text-sm cursor-pointer"
           />
         </div>
 
@@ -63,7 +79,9 @@ export default function CampanaForm() {
           {loading ? (
             <span className="animate-spin text-xl">⏳</span>
           ) : (
-            <><PlusCircle size={18} /> Crear Campaña</>
+            <>
+              <PlusCircle size={18} /> Crear Campaña
+            </>
           )}
         </button>
       </form>

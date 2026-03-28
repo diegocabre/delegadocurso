@@ -61,7 +61,7 @@ export default function DashboardPage() {
 
     const { data: c } = await supabase
       .from("campanas")
-      .select("*")
+      .select("*, imagen_url")
       .order("fecha_creacion", { ascending: false });
 
     const { data: pc } = await supabase
@@ -246,18 +246,36 @@ export default function DashboardPage() {
               return (
                 <div
                   key={c.id}
-                  className="bg-white p-5 rounded-2xl border border-purple-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all"
+                  className="bg-white p-5 rounded-2xl border border-purple-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all flex flex-col justify-between min-h-[160px]"
                 >
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-[100px] z-0 pointer-events-none"></div>
-                  <h3 className="font-bold text-lg text-slate-900 mb-1 relative z-10">
-                    {c.nombre}
-                  </h3>
-                  <p className="text-sm text-slate-500 mb-4 relative z-10">
-                    Meta/Costo:{" "}
-                    <span className="font-semibold text-slate-700">
-                      ${c.monto_objetivo.toLocaleString("es-CL")}
-                    </span>
-                  </p>
+                  {/* Imagen de fondo si existe */}
+                  {c.imagen_url && (
+                    <div className="absolute inset-0 z-0">
+                      <Image
+                        src={c.imagen_url}
+                        alt={c.nombre}
+                        fill
+                        className="object-cover opacity-30 group-hover:opacity-40 transition-opacity"
+                      />
+                      <div className="absolute inset-0 bg-linear-to-t from-white via-white/80 to-transparent"></div>
+                    </div>
+                  )}
+
+                  {!c.imagen_url && (
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-[100px] z-0 pointer-events-none"></div>
+                  )}
+
+                  <div className="z-10 relative">
+                    <h3 className="font-bold text-lg text-slate-900 mb-1 drop-shadow-sm">
+                      {c.nombre}
+                    </h3>
+                    <p className="text-sm text-slate-700 font-medium mb-4">
+                      Meta/Costo:{" "}
+                      <span className="font-bold text-purple-900">
+                        ${c.monto_objetivo.toLocaleString("es-CL")}
+                      </span>
+                    </p>
+                  </div>
 
                   <div className="space-y-2 relative z-10">
                     <div className="flex justify-between items-center text-xs font-bold">
