@@ -156,7 +156,7 @@ export default function DashboardPage() {
             </span>
           </div>
           <a
-            href="https://wa.me/569947637541"
+            href="https://wa.me/56947637541"
             target="_blank"
             className="p-2 bg-green-50 text-green-600 rounded-full hover:bg-green-100"
           >
