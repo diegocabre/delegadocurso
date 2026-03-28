@@ -1,74 +1,95 @@
-# 📊 Sistema de Tesorería - Curso 5B (2026)
+# 🎓 ClassTreasury - Panel de Tesorería Escolar
 
-Este es un panel de gestión financiera diseñado para digitalizar y transparentar los fondos del curso **5B**. Permite el registro de aportes (pagos de cuotas) por parte de la directiva y la visualización de gastos e ingresos en tiempo real para todos los apoderados.
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-16+-black?style=for-the-badge&logo=next.js" alt="Next.js" />
+  <img src="https://img.shields.io/badge/Supabase-Database-3ECF8E?style=for-the-badge&logo=supabase" alt="Supabase" />
+  <img src="https://img.shields.io/badge/TailwindCSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/TypeScript-Ready-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Security-Server_Actions-FF4F4F?style=for-the-badge&logo=security" alt="Security" />
+</p>
+
+## 📖 Sobre el Proyecto
+
+ClassTreasury es una plataforma web integral diseñada para digitalizar, organizar y transparentar la gestión financiera de cursos escolares y directivas. Permite a los apoderados visualizar en tiempo real los ingresos, egresos y saldos del curso, garantizando absoluta transparencia y facilidad de uso.
+
+Originalmente desarrollado para el **Curso 5B**, esta herramienta a nivel de arquitectura escala perfectamente para ser implementada como un sistema **"White-Label" (marca blanca)** en cualquier colegio, centro de alumnos o directiva que requiera gestión abierta de fondos colectivos.
 
 ---
 
 ## 🚀 Características Principales
 
-- **Dashboard de Transparencia:** Visualización de ingresos (aportes) y egresos (gastos) con cálculo automático de saldo actual.
-- **Actualizaciones en Tiempo Real:** Integración con _Supabase Realtime_ para que los cambios se reflejen instantáneamente sin recargar la página.
-- **Panel Administrativo:** Sección protegida para el registro de nuevos movimientos.
-- **Gestión de Comprobantes:** Soporte para subir fotos de boletas y comprobantes de transferencia directamente desde el móvil.
-- **Diseño Mobile-First:** Optimizado para que los apoderados lo consulten desde sus smartphones.
-
-## 🛠️ Tech Stack
-
-- **Framework:** [Next.js 15+](https://nextjs.org/) (App Router)
-- **Lenguaje:** [TypeScript](https://www.typescriptlang.org/)
-- **Base de Datos & Auth:** [Supabase](https://supabase.com/)
-- **Estilos:** [Tailwind CSS](https://tailwindcss.com/)
-- **Iconografía:** [Lucide React](https://lucide.dev/)
-- **Componentes UI:** Shadcn/ui (Radix UI)
-
-## 📦 Instalación y Configuración
-
-1.  **Clonar el repositorio:**
-
-    ```bash
-    git clone [https://github.com/tu-usuario/tesoreria-5b.git](https://github.com/tu-usuario/tesoreria-5b.git)
-    cd tesoreria-5b
-    ```
-
-2.  **Instalar dependencias:**
-
-    ```bash
-    npm install
-    ```
-
-3.  **Variables de Entorno:**
-    Crea un archivo `.env.local` en la raíz y añade tus credenciales de Supabase:
-
-    ```env
-    NEXT_PUBLIC_SUPABASE_URL=tu_url_aqui
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_key_aqui
-    ```
-
-4.  **Correr en desarrollo:**
-    ```bash
-    npm run dev
-    ```
-
-## 🏗️ Estructura del Proyecto
-
-- `/app`: Rutas de Next.js (Dashboard, Admin, Login).
-- `/components`: Componentes reutilizables (Modales, Tablas, Stats).
-- `/lib`: Configuración de clientes (Supabase, utilidades).
-- `/public`: Assets estáticos y logos del curso.
-
-## 🛡️ Configuración de Base de Datos (Supabase)
-
-Para que el **Realtime** funcione correctamente, asegúrate de activar la replicación en el panel de Supabase:
-
-1. Ve a **Database** -> **Replication**.
-2. Habilita las tablas `pagos` y `gastos` en la publicación `supabase_realtime`.
-
-## 👥 Directiva 2026
-
-- **Delegado:** Diego Cabré
-- **Tesorería:** Macarena Carvajal
-- **Tesorería BackUp:** Carlos Montenegro
+- **Dashboard Público de Transparencia:** Visualización instantánea de la caja actual, total recaudado y gastos históricos (sin necesidad de iniciar sesión para padres/apoderados).
+- **🛡️ Panel Administrativo Blindado:** Zona protegida con _Proxy Node.js Edge_ y generación de cookies de sesión HTTPOnly para aislar la administración.
+- **Seguridad Backend (Server Actions):** Todas las validaciones de base de datos están protegidas en entornos backend aislados empleando _Roles de Servicio_. Nadie puede insertar datos desde el navegador por consola.
+- **Gestor Fotográfico de Boletas:** Evidencia fotográfica estricta en la nube de cada movimiento. Los comprobantes se cargan directamente a Supabase Storage con soporte nativo para cámaras de smartphone.
+- **Saldos en Tiempo Real:** Algoritmo veloz que calcula instantáneamente pagos pendientes y el registro histórico del año por alumno.
+- **Diseño Mobile-First:** Experiencia limpia, colorida y fluida (basada en Tailwind CSS) construida en primer término para pantallas de celulares.
 
 ---
 
-Desarrollado con ❤️ para el 5B.
+## 🛠️ Stack Tecnológico
+
+- **Frontend:** [Next.js 16 (App Router)](https://nextjs.org/) + React 19
+- **Lenguaje:** [TypeScript](https://www.typescriptlang.org/)
+- **Backend & Almacenamiento:** [Supabase](https://supabase.com/) (PostgreSQL + Buckets RLS)
+- **Estilos:** [Tailwind CSS v4](https://tailwindcss.com/)
+- **Notificaciones UI:** [Sonner](https://sonner.emilkowal.ski/)
+- **Iconografía:** [Lucide React](https://lucide.dev/)
+
+---
+
+## 📦 Despliegue e Instalación Local
+
+### 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/diegocabre/delegadocurso.git
+cd delegadocurso
+```
+
+### 2. Variables de Entorno
+Crea un archivo local `.env.local` en la matriz de la carpeta y define estas 4 credenciales obligatorias:
+
+| Variable | Descripción | Dónde encontrarla |
+| :--- | :--- | :--- |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL de tu proyecto Supabase | Supabase > Project Settings > API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Llave pública para *lecturas* | Supabase > Project Settings > API |
+| `SUPABASE_SERVICE_ROLE_KEY` | **🗝️ CRÍTICO:** Llave maestra secreta para escrituras backend (Saltarse el RLS). | Supabase > Project Settings > API |
+| `ADMIN_PASSWORD` | Contraseña global para la directiva (`/admin`). | *¡Invéntala tú mismo! (Ej. `Tesoreria2026`)* |
+
+### 3. Configuración de Base de Datos (Supabase)
+Prepara el entorno creando el Storage Bucket **"boletas"** y estas Tablas en SQL:
+- `alumnos` (`id`, `nombre`, `apellido`)
+- `pagos` (`id`, `alumno_id`, `monto`, `fecha`, `mes`, `comprobante_url`)
+- `gastos` (`id`, `descripcion`, `categoria`, `monto`, `fecha`, `boleta_url`)
+
+> **⚠️ Alerta de Seguridad:** Te recomendamos entrar al panel de Tablas de Supabase y **activar "Row Level Security (RLS)"**. No necesitas crear pólizas complejas para que el público inserte, asume el bloqueo rotundo. La aplicación usará silenciosamente tu _Service Role Key_ a nivel de servidor NodeJS para insertar, protegiendo tus datos al 100% ante usuarios maliciosos.
+
+### 4. Iniciar Servidor de Desarrollo
+
+```bash
+npm install
+npm run dev
+```
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador preferido.
+
+---
+
+## 🌍 Producción Rápida (Recomendado)
+
+Si venderás esto o lo distribuirás como "SaaS", **Vercel** es la opción ideal para clonar este repositorio docenas de veces:
+
+1. Conecta este repositorio en tu cuenta de Vercel como un nuevo proyecto.
+2. En la ventana emergente de despliegue, dirígete al acordeón de **Environment Variables** y pega estrictamente las 4 claves recién nombradas. Si omites la `SUPABASE_SERVICE_ROLE_KEY`, el guardado de recibos arrojará error *500*.
+3. Presiona **Deploy**. Vercel se encargará de compilar las Edge Functions para el manejo seguro de inicio de sesión de la Directiva.
+
+---
+
+## 👥 Créditos del Origen
+
+Arquitectado y validado en batallas para la **Directiva Escolar 2026**.
+- **Delegado Principal:** Diego Cabré
+- **Tesorería y Finanzas:** Macarena Carvajal
+- **Backup Tecnológico:** Carlos Montenegro
+
+> *Desarrollado con ❤️ para ser replicado y escalado.*
