@@ -252,7 +252,7 @@ export default function DashboardPage() {
                   {c.imagen_url && (
                     <div className="absolute top-0 right-0 w-3/5 h-full z-0 overflow-hidden">
                       {/* Gradiente que difumina la izquierda para transicionar suave al texto blanco */}
-                      <div className="absolute inset-0 bg-gradient-to-r w-full from-white via-white/60 to-transparent z-10"></div>
+                      <div className="absolute inset-0 bg-linear-to-r w-full from-white via-white/60 to-transparent z-10"></div>
                       <img
                         src={c.imagen_url}
                         alt={c.nombre}
