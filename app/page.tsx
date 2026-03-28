@@ -162,7 +162,7 @@ export default function DashboardPage() {
         soloPrincipales={true}
       />
 
-      {/* ... Sección Directiva (Sin cambios) ... */}
+      {/*Sección Directiva */}
       <section className="mb-10 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap gap-6 items-center justify-center lg:justify-start">
         <div className="flex items-center gap-2 text-slate-400 border-r pr-6 border-slate-100 last:border-0">
           <ShieldCheck size={20} className="text-blue-500" />
@@ -270,7 +270,7 @@ export default function DashboardPage() {
                       {c.nombre}
                     </h3>
                     <p className="text-sm text-slate-700 font-medium mb-4">
-                      Meta/Costo:{" "}
+                      Costo por Alumno:{" "}
                       <span className="font-bold text-purple-900">
                         ${c.monto_objetivo.toLocaleString("es-CL")}
                       </span>
