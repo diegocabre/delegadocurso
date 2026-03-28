@@ -20,9 +20,10 @@ Originalmente desarrollado para el **Curso 5B**, esta herramienta a nivel de arq
 
 - **Dashboard Público de Transparencia:** Visualización instantánea de la caja actual, total recaudado y gastos históricos (sin necesidad de iniciar sesión para padres/apoderados).
 - **🛡️ Panel Administrativo Blindado:** Zona protegida con _Proxy Node.js Edge_ y generación de cookies de sesión HTTPOnly para aislar la administración.
+- **Módulo SaaS de Eventos y Campañas:** Gestión completamente separada para abonos extraordinarios (ej: Paseos, Pascua de Resurrección, etc.) sin que alteren el pozo de la cuota anual. Se habilitan metas dinámicas de recaudación.
 - **Seguridad Backend (Server Actions):** Todas las validaciones de base de datos están protegidas en entornos backend aislados empleando _Roles de Servicio_. Nadie puede insertar datos desde el navegador por consola.
 - **Gestor Fotográfico de Boletas:** Evidencia fotográfica estricta en la nube de cada movimiento. Los comprobantes se cargan directamente a Supabase Storage con soporte nativo para cámaras de smartphone.
-- **Saldos en Tiempo Real:** Algoritmo veloz que calcula instantáneamente pagos pendientes y el registro histórico del año por alumno.
+- **Saldos en Tiempo Real:** Algoritmo veloz que calcula instantáneamente pagos pendientes y el registro histórico del año por alumno, integrando bases de datos en vivo (Supabase Realtime).
 - **Diseño Mobile-First:** Experiencia limpia, colorida y fluida (basada en Tailwind CSS) construida en primer término para pantallas de celulares.
 
 ---
@@ -62,8 +63,11 @@ Prepara el entorno creando el Storage Bucket **"boletas"** y estas Tablas en SQL
 - `alumnos` (`id`, `nombre`, `apellido`)
 - `pagos` (`id`, `alumno_id`, `monto`, `fecha`, `mes`, `comprobante_url`)
 - `gastos` (`id`, `descripcion`, `categoria`, `monto`, `fecha`, `boleta_url`)
+- `campanas` (`id`, `nombre`, `monto_objetivo`, `fecha_creacion`)
+- `pagos_campanas` (`id`, `alumno_id`, `campana_id`, `monto`, `fecha`, `comprobante_url`)
 
-> **⚠️ Alerta de Seguridad:** Te recomendamos entrar al panel de Tablas de Supabase y **activar "Row Level Security (RLS)"**. No necesitas crear pólizas complejas para que el público inserte, asume el bloqueo rotundo. La aplicación usará silenciosamente tu _Service Role Key_ a nivel de servidor NodeJS para insertar, protegiendo tus datos al 100% ante usuarios maliciosos.
+> **⚠️ Alerta de Seguridad (Row Level Security):** Te recomendamos entrar al panel de Tablas de Supabase y **activar "Row Level Security (RLS)"** en TODAS las tablas. 
+> Tu servidor backend ignorará el RLS para escribir usando el *Service Role Key*, pero **debes crear Políticas (Policies) públicas de LECTURA (`SELECT`)** a favor de todos los usuarios para que el dashboard pueda ser visto por los apoderados. Solo ejecuta `CREATE POLICY "Lectura" ON tabla FOR SELECT USING (true);` en el SQL Editor para cada tabla.
 
 ### 4. Iniciar Servidor de Desarrollo
 
