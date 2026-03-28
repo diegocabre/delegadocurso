@@ -3,18 +3,15 @@
 import { supabase } from "@/lib/supabase";
 import { Banknote, Camera, Loader2, UserCheck } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { crearPago } from "../../actions/admin";
 
-export default function PagoForm({
-  onPagoGuardado,
-}: {
-  onPagoGuardado: () => void;
-}) {
+export default function PagoForm() {
   const [loading, setLoading] = useState(false);
   const [alumnos, setAlumnos] = useState<any[]>([]);
   const [buscandoAlumnos, setBuscandoAlumnos] = useState(true);
   const CUOTA_ANUAL = 50000;
 
-  // Envolvemos la carga en useCallback para poder reutilizarla
   const cargarAlumnosConSaldos = useCallback(async () => {
     setBuscandoAlumnos(true);
     const { data, error } = await supabase
@@ -23,7 +20,7 @@ export default function PagoForm({
       .order("apellido", { ascending: true });
 
     if (error) {
-      console.error("Error cargando datos:", error);
+      toast.error("Error cargando alumnos: " + error.message);
     } else {
       const alumnosConSaldo = data.map((alumno: any) => {
         const pagado =
@@ -49,62 +46,28 @@ export default function PagoForm({
     const formData = new FormData(form);
     const montoNuevo = parseInt(formData.get("monto") as string);
     const alumnoId = formData.get("alumno_id");
-    const fechaStr = formData.get("fecha") as string;
     const file = formData.get("comprobante") as File;
 
-    if (!alumnoId) return alert("⚠️ Selecciona un alumno.");
+    if (!alumnoId) return toast.warning("Selecciona un alumno.");
     const alumnoSeleccionado = alumnos.find((a) => a.id === alumnoId);
 
     if (alumnoSeleccionado && alumnoSeleccionado.saldo <= 0) {
-      return alert(
-        `✅ ${alumnoSeleccionado.nombre} ya completó su cuota anual.`,
-      );
+      return toast.info(`${alumnoSeleccionado.nombre} ya completó su cuota anual.`);
     }
 
     if (isNaN(montoNuevo) || montoNuevo <= 0)
-      return alert("⚠️ El monto debe ser mayor a 0.");
+      return toast.warning("El monto debe ser mayor a 0.");
 
     setLoading(true);
 
     try {
-      let comprobanteUrl = null;
+      await crearPago(formData);
 
-      if (file && file.size > 0) {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `pago_${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from("boletas")
-          .upload(`pagos/${fileName}`, file);
-
-        if (uploadError) throw uploadError;
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("boletas").getPublicUrl(`pagos/${fileName}`);
-        comprobanteUrl = publicUrl;
-      }
-
-      const { error: insertError } = await supabase.from("pagos").insert([
-        {
-          alumno_id: alumnoId,
-          monto: montoNuevo,
-          mes: "Abono a cuenta anual",
-          fecha: fechaStr,
-          comprobante_url: comprobanteUrl,
-        },
-      ]);
-
-      if (insertError) throw insertError;
-
-      alert("✅ Abono registrado con éxito");
-
-      // --- LOS CAMBIOS CLAVE AQUÍ ---
-      form.reset(); // Limpia el formulario
-      onPagoGuardado(); // Actualiza el historial de la AdminPage
-      await cargarAlumnosConSaldos(); // Actualiza los saldos del <select> localmente
-
-      // YA NO USAMOS window.location.reload(); 🚀
+      toast.success("Abono registrado con éxito");
+      form.reset();
+      await cargarAlumnosConSaldos();
     } catch (error: any) {
-      alert("Error: " + error.message);
+      toast.error("Error al guardar: " + error.message);
     } finally {
       setLoading(false);
     }

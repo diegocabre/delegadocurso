@@ -1,111 +1,33 @@
-"use client";
-
 import { supabase } from "@/lib/supabase";
-import { ArrowLeft, Lock, ReceiptText, Trash2, Users } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { ArrowLeft, LogOut, ReceiptText, Users } from "lucide-react";
+import Link from "next/link";
+import { logout } from "../actions/auth";
+import DeleteButton from "./componets/DeleteButton";
 import GastoForm from "./componets/GastoForm";
 import PagoForm from "./componets/PagoForm";
 
-export default function AdminPage() {
-  const [isAuth, setIsAuth] = useState(false);
-  const [pass, setPass] = useState("");
-  const [gastos, setGastos] = useState<any[]>([]);
-  const [pagos, setPagos] = useState<any[]>([]);
-  const router = useRouter();
+export const dynamic = "force-dynamic";
 
-  useEffect(() => {
-    const authCookie = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("admin_auth="))
-      ?.split("=")[1];
+export default async function AdminPage() {
+  const { data: gastos } = await supabase
+    .from("gastos")
+    .select("*")
+    .order("fecha", { ascending: false });
 
-    if (authCookie) setIsAuth(true);
-  }, []);
-
-  const cargarDatos = async () => {
-    const { data: dGastos } = await supabase
-      .from("gastos")
-      .select("*")
-      .order("fecha", { ascending: false });
-    const { data: dPagos } = await supabase
-      .from("pagos")
-      .select(`id, monto, fecha, alumnos (nombre, apellido)`)
-      .order("fecha", { ascending: false });
-
-    if (dGastos) setGastos(dGastos);
-    if (dPagos) setPagos(dPagos);
-  };
-
-  useEffect(() => {
-    if (isAuth) cargarDatos();
-  }, [isAuth]);
-
-  const handleLogin = async () => {
-    const res = await fetch("/api/auth-admin", {
-      method: "POST",
-      body: JSON.stringify({ pass }),
-    });
-
-    if (res.ok) {
-      document.cookie = `admin_auth=${pass}; path=/; max-age=86400; SameSite=Strict`;
-      setIsAuth(true);
-    } else {
-      alert("Clave incorrecta");
-    }
-  };
-
-  const eliminarRegistro = async (tabla: string, id: string) => {
-    if (
-      !confirm(
-        "¿Estás seguro de eliminar este registro? Esta acción no se puede deshacer.",
-      )
-    )
-      return;
-
-    const { error } = await supabase.from(tabla).delete().eq("id", id);
-    if (error) alert("Error al eliminar: " + error.message);
-    else cargarDatos(); // Refresca las tablas
-  };
-
-  if (!isAuth) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-900 p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm">
-          <div className="flex justify-center mb-4 text-red-600">
-            <Lock size={40} />
-          </div>
-          <h2 className="text-2xl font-black mb-6 text-center text-slate-800">
-            Panel de Control
-          </h2>
-          <input
-            type="password"
-            className="w-full p-4 border-2 border-slate-100 rounded-xl mb-4 text-black text-center outline-none"
-            placeholder="Ingrese Clave Maestra"
-            value={pass}
-            onChange={(e) => setPass(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-          />
-          <button
-            onClick={handleLogin}
-            className="w-full bg-red-600 text-white p-4 rounded-xl font-bold transition-all hover:bg-red-700"
-          >
-            Verificar Identidad
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const { data: pagos } = await supabase
+    .from("pagos")
+    .select(`id, monto, fecha, alumnos (nombre, apellido)`)
+    .order("fecha", { ascending: false });
 
   return (
     <div className="p-6 max-w-6xl mx-auto bg-slate-50 min-h-screen text-black">
       <header className="flex justify-between items-center mb-8">
-        <button
-          onClick={() => router.push("/")}
+        <Link
+          href="/"
           className="flex items-center text-slate-500 hover:text-black transition-colors"
         >
           <ArrowLeft size={18} className="mr-1" /> Volver al Dashboard
-        </button>
+        </Link>
         <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
           Sesión Activa
         </span>
@@ -113,8 +35,8 @@ export default function AdminPage() {
 
       {/* FORMULARIOS DE REGISTRO */}
       <div className="grid md:grid-cols-2 gap-6 mb-12">
-        <PagoForm onPagoGuardado={cargarDatos} />
-        <GastoForm onGastoGuardado={cargarDatos} />
+        <PagoForm />
+        <GastoForm />
       </div>
 
       {/* SECCIÓN DE HISTORIALES */}
@@ -134,24 +56,19 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {pagos.map((p) => (
+                {pagos?.map((p) => (
                   <tr
                     key={p.id}
                     className="hover:bg-slate-50 transition-colors"
                   >
                     <td className="p-4 font-medium">
-                      {p.alumnos?.apellido} {p.alumnos?.nombre}
+                      {(p.alumnos as any)?.apellido} {(p.alumnos as any)?.nombre}
                     </td>
                     <td className="p-4 text-green-600 font-bold">
                       ${p.monto.toLocaleString("es-CL")}
                     </td>
                     <td className="p-4 text-center">
-                      <button
-                        onClick={() => eliminarRegistro("pagos", p.id)}
-                        className="text-red-400 hover:text-red-600 p-2"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <DeleteButton tabla="pagos" id={p.id} />
                     </td>
                   </tr>
                 ))}
@@ -175,7 +92,7 @@ export default function AdminPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {gastos.map((g) => (
+                {gastos?.map((g) => (
                   <tr
                     key={g.id}
                     className="hover:bg-slate-50 transition-colors"
@@ -190,12 +107,7 @@ export default function AdminPage() {
                       ${g.monto.toLocaleString("es-CL")}
                     </td>
                     <td className="p-4 text-center">
-                      <button
-                        onClick={() => eliminarRegistro("gastos", g.id)}
-                        className="text-red-400 hover:text-red-600 p-2"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <DeleteButton tabla="gastos" id={g.id} />
                     </td>
                   </tr>
                 ))}
@@ -206,16 +118,14 @@ export default function AdminPage() {
       </div>
 
       <div className="mt-20 py-10 border-t flex flex-col items-center gap-4">
-        <button
-          onClick={() => {
-            document.cookie =
-              "admin_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-            window.location.reload();
-          }}
-          className="text-xs text-slate-400 hover:underline"
-        >
-          Cerrar Sesión de Tesorería
-        </button>
+        <form action={logout}>
+          <button
+            type="submit"
+            className="text-xs text-slate-400 hover:text-red-600 hover:underline flex items-center gap-1"
+          >
+            <LogOut size={14} /> Cerrar Sesión de Tesorería
+          </button>
+        </form>
       </div>
     </div>
   );

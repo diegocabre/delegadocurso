@@ -3,69 +3,34 @@
 import { supabase } from "@/lib/supabase";
 import { Camera, Loader2, Receipt, Tag, Wallet } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { crearGasto } from "../../actions/admin";
 
-export default function GastoForm({
-  onGastoGuardado,
-}: {
-  onGastoGuardado: () => void;
-}) {
+export default function GastoForm() {
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = e.currentTarget; // Referencia al formulario
+    const form = e.currentTarget;
     const formData = new FormData(form);
 
     const monto = parseInt(formData.get("monto") as string);
     const descripcion = formData.get("descripcion") as string;
-    const fechaStr = formData.get("fecha") as string;
     const file = formData.get("boleta") as File;
 
     if (descripcion.trim().length < 3)
-      return alert("⚠️ Descripción válida requerida");
-    if (isNaN(monto) || monto <= 0) return alert("⚠️ Monto inválido");
+      return toast.warning("Descripción válida requerida");
+    if (isNaN(monto) || monto <= 0) return toast.warning("Monto inválido");
 
     setLoading(true);
 
     try {
-      let boletaUrl = null;
+      await crearGasto(formData);
 
-      if (file && file.size > 0) {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `gasto_${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from("boletas")
-          .upload(`gastos/${fileName}`, file);
-
-        if (uploadError) throw uploadError;
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("boletas").getPublicUrl(`gastos/${fileName}`);
-
-        boletaUrl = publicUrl;
-      }
-
-      const { error } = await supabase.from("gastos").insert([
-        {
-          monto,
-          descripcion,
-          categoria: formData.get("categoria"),
-          fecha: fechaStr,
-          boleta_url: boletaUrl,
-        },
-      ]);
-
-      if (error) throw error;
-
-      // --- EL SECRETO PARA QUE NO HAYA FLASH ---
-      form.reset(); // Limpia el formulario
-      onGastoGuardado(); // Actualiza la lista en AdminPage (vía estado, no reload)
-
-      // Opcional: Podrías usar un toast en lugar de alert para evitar bloquear el navegador
-      console.log("Gasto guardado con éxito");
+      form.reset();
+      toast.success("Gasto guardado con éxito");
     } catch (error: any) {
-      alert("Error: " + error.message);
+      toast.error("Error al registrar gasto: " + error.message);
     } finally {
       setLoading(false);
     }
