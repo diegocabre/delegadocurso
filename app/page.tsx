@@ -248,15 +248,16 @@ export default function DashboardPage() {
                   key={c.id}
                   className="bg-white p-5 rounded-2xl border border-purple-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all flex flex-col justify-between min-h-[160px]"
                 >
-                  {/* Imagen de fondo si existe */}
+                  {/* Imagen a la derecha estilo SaaS Premium */}
                   {c.imagen_url && (
-                    <div className="absolute inset-0 z-0">
+                    <div className="absolute top-0 right-0 w-3/5 h-full z-0 overflow-hidden">
+                      {/* Gradiente que difumina la izquierda para transicionar suave al texto blanco */}
+                      <div className="absolute inset-0 bg-gradient-to-r w-full from-white via-white/60 to-transparent z-10"></div>
                       <img
                         src={c.imagen_url}
                         alt={c.nombre}
-                        className="w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity"
+                        className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-transparent"></div>
                     </div>
                   )}
 
@@ -264,7 +265,7 @@ export default function DashboardPage() {
                     <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-[100px] z-0 pointer-events-none"></div>
                   )}
 
-                  <div className="z-10 relative">
+                  <div className="z-10 relative max-w-[70%]">
                     <h3 className="font-bold text-lg text-slate-900 mb-1 drop-shadow-sm">
                       {c.nombre}
                     </h3>
