@@ -270,7 +270,7 @@ export default function DashboardPage() {
                       {c.nombre}
                     </h3>
                     <p className="text-sm text-slate-700 font-medium mb-4">
-                      Costo por Alumno:{" "}
+                      Costo por Alumno/a:{" "}
                       <span className="font-bold text-purple-900">
                         ${c.monto_objetivo.toLocaleString("es-CL")}
                       </span>
