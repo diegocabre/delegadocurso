@@ -248,6 +248,13 @@ export default function DashboardPage() {
                   key={c.id}
                   className="bg-white p-5 rounded-2xl border border-purple-100 shadow-sm relative overflow-hidden group hover:shadow-md transition-all flex flex-col justify-between min-h-[160px]"
                 >
+                  {/* Etiqueta / Banda de Evento Realizado */}
+                  {c.estado === "realizada" && (
+                    <div className="absolute top-5 -right-8 bg-green-500 text-white font-black text-[10px] uppercase py-1 px-10 shadow-md rotate-45 z-20 pointer-events-none ring-1 ring-green-400">
+                      REALIZADO
+                    </div>
+                  )}
+
                   {/* Imagen a la derecha estilo SaaS Premium */}
                   {c.imagen_url && (
                     <div className="absolute top-0 right-0 w-3/5 h-full z-0 overflow-hidden">

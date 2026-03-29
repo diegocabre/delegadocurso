@@ -5,6 +5,7 @@ import { logout } from "../actions/auth";
 import CampanaForm from "./componets/CampanaForm";
 import DeleteButton from "./componets/DeleteButton";
 import GastoForm from "./componets/GastoForm";
+import PagarCampanaCajaBtn from "./componets/PagarCampanaCajaBtn";
 import PagoCampanaForm from "./componets/PagoCampanaForm";
 import PagoForm from "./componets/PagoForm";
 
@@ -71,6 +72,11 @@ export default async function AdminPage() {
             {campanas.map(c => (
               <div key={c.id} className="inline-flex items-center gap-3 bg-purple-50 border border-purple-100 rounded-full pl-4 pr-1 py-1 shadow-sm">
                 <span className="text-sm font-bold text-purple-800">{c.nombre} <span className="text-purple-500 font-normal">(${c.monto_objetivo.toLocaleString("es-CL")})</span></span>
+                {c.estado === "realizada" ? (
+                  <span className="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded-full font-bold ml-1">REALIZADO</span>
+                ) : (
+                  <PagarCampanaCajaBtn campanaId={c.id} nombreCampana={c.nombre} />
+                )}
                 <div className="h-4 w-px bg-purple-200 mx-1"></div>
                 <DeleteButton tabla="campanas" id={c.id} />
               </div>
