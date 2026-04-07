@@ -4,6 +4,8 @@ import Link from "next/link";
 import { logout } from "../actions/auth";
 import CampanaForm from "./componets/CampanaForm";
 import DeleteButton from "./componets/DeleteButton";
+import DesactivarAlumnoBtn from "./componets/DesactivarAlumnoBtn";
+import AlumnoForm from "./componets/AlumnoForm";
 import GastoForm from "./componets/GastoForm";
 import PagarCampanaCajaBtn from "./componets/PagarCampanaCajaBtn";
 import PagoCampanaForm from "./componets/PagoCampanaForm";
@@ -26,6 +28,7 @@ export default async function AdminPage() {
   const { data: alumnos } = await supabase
     .from("alumnos")
     .select("*")
+    .eq("activo", true)
     .order("apellido");
 
   const { data: campanas } = await supabase
@@ -59,6 +62,35 @@ export default async function AdminPage() {
       <div className="grid lg:grid-cols-2 gap-6 mb-12">
         <PagoForm />
         <GastoForm />
+      </div>
+
+      {/* BLOQUE: ALUMNOS */}
+      <h2 className="text-xl font-black text-slate-800 mb-4 border-b pb-2">
+        Gestión de Integrantes del Curso
+      </h2>
+      <div className="grid lg:grid-cols-2 gap-6 mb-12 items-start">
+        <AlumnoForm />
+        
+        {/* Lista de Alumnos */}
+        <div className="bg-white rounded-2xl border shadow-sm flex flex-col max-h-[350px]">
+          <div className="p-4 bg-blue-50 border-b flex items-center gap-2 font-bold text-blue-700 w-full shrink-0">
+            <Users size={18} /> Alumnos Activos ({alumnos?.length || 0})
+          </div>
+          <div className="overflow-y-auto flex-1 p-4">
+            <div className="flex flex-wrap gap-2">
+              {alumnos?.map(a => (
+                <div key={a.id} className="inline-flex items-center gap-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-full pl-4 pr-1 py-1 text-sm shadow-sm transition-colors">
+                  <span className="font-semibold text-slate-700">{a.apellido} {a.nombre}</span>
+                  <div className="h-4 w-px bg-slate-200 mx-1"></div>
+                  <DesactivarAlumnoBtn id={a.id} nombreCompleto={`${a.nombre} ${a.apellido}`} />
+                </div>
+              ))}
+              {alumnos?.length === 0 && (
+                 <p className="text-sm text-slate-500 italic w-full text-center py-4">No hay alumnos registrados.</p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* BLOQUE 2: MÓDULO DE CAMPAÑAS/EXTRAORDINARIOS */}

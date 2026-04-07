@@ -242,6 +242,14 @@ export default function DashboardPage() {
               const recaudado = pagosCampanas
                 .filter((pc) => pc.campana_id === c.id)
                 .reduce((acc, pc) => acc + pc.monto, 0);
+                
+              // Calcular lo pagado desde el fondo central (Gastos) buscando por descripción exacta
+              const pagadoConFondo = gastos
+                .filter((g) => g.descripcion === `Pago evento (Fondo Central): ${c.nombre}`)
+                .reduce((acc, g) => acc + g.monto, 0);
+
+              // Si la campaña está realizada y se pagó con fondo, mostrar todo como recaudado/pagado 
+              const totalRecaudado = recaudado + (c.estado === "realizada" ? pagadoConFondo : 0);
 
               return (
                 <div
@@ -287,10 +295,10 @@ export default function DashboardPage() {
                   <div className="space-y-2 relative z-10">
                     <div className="flex justify-between items-center text-xs font-bold">
                       <span className="text-purple-700 bg-white/50 px-1 rounded">
-                        Recaudado hasta ahora
+                        {c.estado === "realizada" && pagadoConFondo > 0 ? "Monto Final (Inc. Fondo)" : "Recaudado hasta ahora"}
                       </span>
                       <span className="text-slate-900 text-sm bg-white/80 px-2 py-0.5 rounded-md shadow-sm">
-                        ${recaudado.toLocaleString("es-CL")}
+                        ${totalRecaudado.toLocaleString("es-CL")}
                       </span>
                     </div>
                   </div>

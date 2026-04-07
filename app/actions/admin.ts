@@ -106,3 +106,37 @@ export async function eliminarRegistro(
   revalidatePath("/");
   revalidatePath("/admin");
 }
+
+export async function desactivarAlumno(id: string) {
+  await checkAuth();
+
+  const { error } = await supabaseAdmin
+    .from("alumnos")
+    .update({ activo: false })
+    .eq("id", id);
+    
+  if (error) throw new Error(error.message);
+  
+  revalidatePath("/");
+  revalidatePath("/admin");
+}
+
+export async function crearAlumno(formData: FormData) {
+  await checkAuth();
+
+  const nombre = formData.get("nombre") as string;
+  const apellido = formData.get("apellido") as string;
+
+  const { error } = await supabaseAdmin.from("alumnos").insert([
+    {
+      nombre,
+      apellido,
+      activo: true
+    },
+  ]);
+
+  if (error) throw new Error(error.message);
+  
+  revalidatePath("/");
+  revalidatePath("/admin");
+}

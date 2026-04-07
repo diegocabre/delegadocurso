@@ -17,6 +17,7 @@ export default function PagoForm() {
     const { data, error } = await supabase
       .from("alumnos")
       .select(`id, nombre, apellido, pagos (monto)`)
+      .eq("activo", true)
       .order("apellido", { ascending: true });
 
     if (error) {
