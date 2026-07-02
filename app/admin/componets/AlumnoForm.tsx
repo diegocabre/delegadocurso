@@ -15,7 +15,11 @@ export default function AlumnoForm() {
     const formData = new FormData(e.currentTarget);
 
     try {
-      await crearAlumno(formData);
+      const res = await crearAlumno(formData);
+      if (res && !res.success) {
+        toast.error("Error: " + res.error);
+        return;
+      }
       toast.success("Alumno agregado correctamente");
       (e.target as HTMLFormElement).reset();
     } catch (error: any) {

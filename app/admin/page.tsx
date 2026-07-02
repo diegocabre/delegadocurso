@@ -14,14 +14,35 @@ import PagoForm from "./componets/PagoForm";
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
+  const cursoCodigo = process.env.NEXT_PUBLIC_CURSO_CODIGO || "CL-5B-2026";
+  const { data: cursoData, error: cursoError } = await supabase
+    .from("cursos")
+    .select("id")
+    .eq("codigo", cursoCodigo)
+    .single();
+
+  if (cursoError || !cursoData) {
+    return (
+      <div className="p-6 text-center text-red-500">
+        <h1 className="text-xl font-bold">Error de Configuración</h1>
+        <p className="mt-2 text-sm">No se encontró el curso con código "{cursoCodigo}" en la base de datos.</p>
+        <p className="text-xs text-slate-400 mt-1">Asegúrate de ejecutar el script `supabase_migration.sql` en Supabase.</p>
+      </div>
+    );
+  }
+
+  const cId = cursoData.id;
+
   const { data: gastos } = await supabase
     .from("gastos")
     .select("*")
+    .eq("curso_id", cId)
     .order("fecha", { ascending: false });
 
   const { data: pagos } = await supabase
     .from("pagos")
     .select(`id, monto, fecha, alumnos (nombre, apellido)`)
+    .eq("curso_id", cId)
     .order("fecha", { ascending: false });
 
   // Nuevas consultas para el Módulo de Campañas
@@ -29,16 +50,19 @@ export default async function AdminPage() {
     .from("alumnos")
     .select("*")
     .eq("activo", true)
+    .eq("curso_id", cId)
     .order("apellido");
 
   const { data: campanas } = await supabase
     .from("campanas")
     .select("*")
+    .eq("curso_id", cId)
     .order("fecha_creacion", { ascending: false });
 
   const { data: pagosCampanas } = await supabase
     .from("pagos_campanas")
     .select(`id, monto, fecha, alumnos(nombre, apellido), campanas(nombre)`)
+    .eq("curso_id", cId)
     .order("fecha", { ascending: false });
 
   return (

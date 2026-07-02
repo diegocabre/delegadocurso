@@ -62,7 +62,11 @@ export default function PagoForm() {
     setLoading(true);
 
     try {
-      await crearPago(formData);
+      const res = await crearPago(formData);
+      if (res && !res.success) {
+        toast.error("Error al guardar: " + res.error);
+        return;
+      }
 
       toast.success("Abono registrado con éxito");
       form.reset();

@@ -29,7 +29,11 @@ export default function PagarCampanaCajaBtn({
       formData.append("campana_id", campanaId);
       formData.append("nombre_campana", nombreCampana);
 
-      await pagarCampanaConCuotaFondo(formData);
+      const res = await pagarCampanaConCuotaFondo(formData);
+      if (res && !res.success) {
+        toast.error("Error al registrar pago: " + res.error);
+        return;
+      }
       
       toast.success("Evento pagado exitosamente desde la cuota central");
       setIsOpen(false);

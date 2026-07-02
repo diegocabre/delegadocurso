@@ -15,128 +15,199 @@ async function checkAuth() {
   }
 }
 
-export async function crearGasto(formData: FormData) {
-  await checkAuth();
-
-  const monto = parseInt(formData.get("monto") as string);
-  const descripcion = formData.get("descripcion") as string;
-  const categoria = formData.get("categoria") as string;
-  const fecha = formData.get("fecha") as string;
-  const file = formData.get("boleta") as File;
-
-  let boletaUrl = null;
-
-  if (file && file.size > 0) {
-    const fileExt = file.name.split(".").pop();
-    const fileName = `gasto_${Date.now()}.${fileExt}`;
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from("boletas")
-      .upload(`gastos/${fileName}`, file);
-
-    if (uploadError) throw new Error(uploadError.message);
-
-    const {
-      data: { publicUrl },
-    } = supabaseAdmin.storage.from("boletas").getPublicUrl(`gastos/${fileName}`);
-
-    boletaUrl = publicUrl;
+async function getCursoId() {
+  const cursoCodigo = process.env.NEXT_PUBLIC_CURSO_CODIGO || "CL-5B-2026";
+  const { data, error } = await supabaseAdmin
+    .from("cursos")
+    .select("id")
+    .eq("codigo", cursoCodigo)
+    .single();
+  if (error || !data) {
+    throw new Error("Curso no configurado o no encontrado: " + (error?.message || ""));
   }
+  return data.id;
+}
 
-  const { error } = await supabaseAdmin.from("gastos").insert([
-    {
-      monto,
-      descripcion,
-      categoria,
-      fecha,
-      boleta_url: boletaUrl,
-    },
-  ]);
+export async function crearGasto(formData: FormData) {
+  try {
+    await checkAuth();
 
-  if (error) throw new Error(error.message);
-  revalidatePath("/admin");
+    const monto = parseInt(formData.get("monto") as string);
+    const descripcion = formData.get("descripcion") as string;
+    const categoria = formData.get("categoria") as string;
+    const fecha = formData.get("fecha") as string;
+    const file = formData.get("boleta") as File;
+
+    let boletaUrl = null;
+
+    if (file && file.size > 0) {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `gasto_${Date.now()}.${fileExt}`;
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from("boletas")
+        .upload(`gastos/${fileName}`, buffer, {
+          contentType: file.type || "image/jpeg",
+        });
+
+      if (uploadError) {
+        return { success: false, error: "Error al subir boleta: " + uploadError.message };
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabaseAdmin.storage.from("boletas").getPublicUrl(`gastos/${fileName}`);
+
+      boletaUrl = publicUrl;
+    }
+
+    const cursoId = await getCursoId();
+
+    const { error } = await supabaseAdmin.from("gastos").insert([
+      {
+        curso_id: cursoId,
+        monto,
+        descripcion,
+        categoria,
+        fecha,
+        boleta_url: boletaUrl,
+      },
+    ]);
+
+    if (error) {
+      return { success: false, error: "Error en base de datos: " + error.message };
+    }
+
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Error desconocido" };
+  }
 }
 
 export async function crearPago(formData: FormData) {
-  await checkAuth();
+  try {
+    await checkAuth();
 
-  const montoNuevo = parseInt(formData.get("monto") as string);
-  const alumnoId = formData.get("alumno_id") as string;
-  const fechaStr = formData.get("fecha") as string;
-  const file = formData.get("comprobante") as File;
+    const montoNuevo = parseInt(formData.get("monto") as string);
+    const alumnoId = formData.get("alumno_id") as string;
+    const fechaStr = formData.get("fecha") as string;
+    const file = formData.get("comprobante") as File;
 
-  let comprobanteUrl = null;
+    let comprobanteUrl = null;
 
-  if (file && file.size > 0) {
-    const fileExt = file.name.split(".").pop();
-    const fileName = `pago_${Date.now()}.${fileExt}`;
-    const { error: uploadError } = await supabaseAdmin.storage
-      .from("boletas")
-      .upload(`pagos/${fileName}`, file);
+    if (file && file.size > 0) {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `pago_${Date.now()}.${fileExt}`;
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from("boletas")
+        .upload(`pagos/${fileName}`, buffer, {
+          contentType: file.type || "image/jpeg",
+        });
 
-    if (uploadError) throw new Error(uploadError.message);
-    const {
-      data: { publicUrl },
-    } = supabaseAdmin.storage.from("boletas").getPublicUrl(`pagos/${fileName}`);
-    comprobanteUrl = publicUrl;
+      if (uploadError) {
+        return { success: false, error: "Error al subir comprobante: " + uploadError.message };
+      }
+      const {
+        data: { publicUrl },
+      } = supabaseAdmin.storage.from("boletas").getPublicUrl(`pagos/${fileName}`);
+      comprobanteUrl = publicUrl;
+    }
+
+    const cursoId = await getCursoId();
+
+    const { error } = await supabaseAdmin.from("pagos").insert([
+      {
+        curso_id: cursoId,
+        alumno_id: alumnoId,
+        monto: montoNuevo,
+        mes: "Abono a cuenta anual",
+        fecha: fechaStr,
+        comprobante_url: comprobanteUrl,
+      },
+    ]);
+
+    if (error) {
+      return { success: false, error: "Error en base de datos: " + error.message };
+    }
+
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Error desconocido" };
   }
-
-  const { error } = await supabaseAdmin.from("pagos").insert([
-    {
-      alumno_id: alumnoId,
-      monto: montoNuevo,
-      mes: "Abono a cuenta anual",
-      fecha: fechaStr,
-      comprobante_url: comprobanteUrl,
-    },
-  ]);
-
-  if (error) throw new Error(error.message);
-  revalidatePath("/admin");
 }
 
 export async function eliminarRegistro(
   tabla: "gastos" | "pagos" | "campanas" | "pagos_campanas", 
   id: string
 ) {
-  await checkAuth();
+  try {
+    await checkAuth();
 
-  const { error } = await supabaseAdmin.from(tabla).delete().eq("id", id);
-  if (error) throw new Error(error.message);
-  
-  revalidatePath("/");
-  revalidatePath("/admin");
+    const { error } = await supabaseAdmin.from(tabla).delete().eq("id", id);
+    if (error) {
+      return { success: false, error: "Error al eliminar: " + error.message };
+    }
+    
+    revalidatePath("/");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Error desconocido" };
+  }
 }
 
 export async function desactivarAlumno(id: string) {
-  await checkAuth();
+  try {
+    await checkAuth();
 
-  const { error } = await supabaseAdmin
-    .from("alumnos")
-    .update({ activo: false })
-    .eq("id", id);
+    const { error } = await supabaseAdmin
+      .from("alumnos")
+      .update({ activo: false })
+      .eq("id", id);
+      
+    if (error) {
+      return { success: false, error: "Error al desactivar: " + error.message };
+    }
     
-  if (error) throw new Error(error.message);
-  
-  revalidatePath("/");
-  revalidatePath("/admin");
+    revalidatePath("/");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Error desconocido" };
+  }
 }
 
 export async function crearAlumno(formData: FormData) {
-  await checkAuth();
+  try {
+    await checkAuth();
 
-  const nombre = formData.get("nombre") as string;
-  const apellido = formData.get("apellido") as string;
+    const nombre = formData.get("nombre") as string;
+    const apellido = formData.get("apellido") as string;
 
-  const { error } = await supabaseAdmin.from("alumnos").insert([
-    {
-      nombre,
-      apellido,
-      activo: true
-    },
-  ]);
+    const cursoId = await getCursoId();
 
-  if (error) throw new Error(error.message);
-  
-  revalidatePath("/");
-  revalidatePath("/admin");
+    const { error } = await supabaseAdmin.from("alumnos").insert([
+      {
+        curso_id: cursoId,
+        nombre,
+        apellido,
+        activo: true
+      },
+    ]);
+
+    if (error) {
+      return { success: false, error: "Error en base de datos: " + error.message };
+    }
+    
+    revalidatePath("/");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || "Error desconocido" };
+  }
 }

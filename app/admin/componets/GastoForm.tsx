@@ -25,7 +25,11 @@ export default function GastoForm() {
     setLoading(true);
 
     try {
-      await crearGasto(formData);
+      const res = await crearGasto(formData);
+      if (res && !res.success) {
+        toast.error("Error al registrar gasto: " + res.error);
+        return;
+      }
 
       form.reset();
       toast.success("Gasto guardado con éxito");

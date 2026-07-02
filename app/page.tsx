@@ -34,6 +34,7 @@ function TableSkeleton({ rows = 4 }: { rows?: number }) {
 }
 
 export default function DashboardPage() {
+  const [cursoId, setCursoId] = useState<string | null>(null);
   const [gastos, setGastos] = useState<any[]>([]);
   const [pagos, setPagos] = useState<any[]>([]);
   const [campanas, setCampanas] = useState<any[]>([]); // <--- NUEVO: Campañas
@@ -44,9 +45,28 @@ export default function DashboardPage() {
 
   const getData = useCallback(async () => {
     setLoading(true); // Iniciamos carga
+    
+    // Obtener el curso configurado por código
+    const cursoCodigo = process.env.NEXT_PUBLIC_CURSO_CODIGO || "CL-5B-2026";
+    const { data: cursoData, error: cursoError } = await supabase
+      .from("cursos")
+      .select("id")
+      .eq("codigo", cursoCodigo)
+      .single();
+
+    if (cursoError || !cursoData) {
+      console.error("Error cargando curso o curso no encontrado:", cursoError);
+      setLoading(false);
+      return;
+    }
+
+    const cId = cursoData.id;
+    setCursoId(cId);
+
     const { data: g } = await supabase
       .from("gastos")
       .select("*")
+      .eq("curso_id", cId)
       .order("fecha", { ascending: false });
 
     const { data: p } = await supabase
@@ -57,16 +77,19 @@ export default function DashboardPage() {
         alumnos (nombre, apellido)
       `,
       )
+      .eq("curso_id", cId)
       .order("fecha", { ascending: false });
 
     const { data: c } = await supabase
       .from("campanas")
       .select("*, imagen_url")
+      .eq("curso_id", cId)
       .order("fecha_creacion", { ascending: false });
 
     const { data: pc } = await supabase
       .from("pagos_campanas")
       .select(`id, monto, campana_id, alumnos (nombre, apellido)`)
+      .eq("curso_id", cId)
       .order("fecha", { ascending: false });
 
     if (g) setGastos(g);
@@ -78,27 +101,31 @@ export default function DashboardPage() {
 
   useEffect(() => {
     getData();
+  }, [getData]);
+
+  useEffect(() => {
+    if (!cursoId) return;
 
     const channel = supabase
       .channel("dashboard_realtime")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "gastos" },
+        { event: "*", schema: "public", table: "gastos", filter: `curso_id=eq.${cursoId}` },
         () => getData(),
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "pagos" },
+        { event: "*", schema: "public", table: "pagos", filter: `curso_id=eq.${cursoId}` },
         () => getData(),
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "campanas" },
+        { event: "*", schema: "public", table: "campanas", filter: `curso_id=eq.${cursoId}` },
         () => getData(),
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "pagos_campanas" },
+        { event: "*", schema: "public", table: "pagos_campanas", filter: `curso_id=eq.${cursoId}` },
         () => getData(),
       )
       .subscribe();
@@ -106,7 +133,7 @@ export default function DashboardPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [getData]);
+  }, [cursoId, getData]);
 
   // --- LÓGICA DE FILTRO UI ---
   // Filtramos la lista de pagos en memoria según lo que escriba el usuario

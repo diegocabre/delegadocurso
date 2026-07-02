@@ -24,7 +24,11 @@ export default function DesactivarAlumnoBtn({
 
     startTransition(async () => {
       try {
-        await desactivarAlumno(id);
+        const res = await desactivarAlumno(id);
+        if (res && !res.success) {
+          toast.error("Error al desactivar: " + res.error);
+          return;
+        }
         toast.success(`Alumno ${nombreCompleto} desactivado correctamente.`);
       } catch (error: any) {
         toast.error("Error al desactivar: " + error.message);

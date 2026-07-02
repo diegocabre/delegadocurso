@@ -14,7 +14,11 @@ export default function CampanaForm() {
 
     try {
       const formData = new FormData(e.currentTarget);
-      await crearCampana(formData);
+      const res = await crearCampana(formData);
+      if (res && !res.success) {
+        toast.error("Error al crear campaña: " + res.error);
+        return;
+      }
 
       toast.success("Campaña creada con éxito");
       (e.target as HTMLFormElement).reset();

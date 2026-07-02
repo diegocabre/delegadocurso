@@ -24,7 +24,11 @@ export default function PagoCampanaForm({ alumnos, campanas }: PagoCampanaFormPr
 
     try {
       const formData = new FormData(e.currentTarget);
-      await crearPagoCampana(formData);
+      const res = await crearPagoCampana(formData);
+      if (res && !res.success) {
+        toast.error("Error al registrar pago: " + res.error);
+        return;
+      }
       
       toast.success("Pago de campaña registrado con éxito");
       (e.target as HTMLFormElement).reset();

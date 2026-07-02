@@ -24,7 +24,10 @@ export default function DeleteButton({
 
     startTransition(async () => {
       try {
-        await eliminarRegistro(tabla, id);
+        const res = await eliminarRegistro(tabla, id);
+        if (res && !res.success) {
+          alert("Error al eliminar: " + res.error);
+        }
       } catch (error: any) {
         alert("Error al eliminar: " + error.message);
       }
